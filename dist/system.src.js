@@ -478,7 +478,37 @@ function logloads(loads) {
         // console.log('LoadSucceeded ' + load.name);
         // snapshot(loader);
 
+        var loader = SystemJS._loader;
+
+        if (loader && loader.loads &&
+
+          loader.loads.length > (loader.total || 0)) {
+
+          loader.total = loader.loads.length;
+
+        }
+
+        if (loader && !loader.loadedAmount) {
+
+          loader.loadedAmount = 0;
+
+        }
+
         load.status = 'loaded';
+
+        loader.loadedAmount++;
+
+        if (loader && loader.$$listenCallbacks) {
+
+          loader
+            .$$listenCallbacks
+            .forEach(function (listener) {
+
+              listener.apply(loader, [load]);
+
+            });
+
+        }
 
         var linkSets = load.linkSets.concat([]);
         for (var i = 0, l = linkSets.length; i < l; i++)
@@ -850,6 +880,21 @@ function logloads(loads) {
             return load.module.module;
           }));
       });
+    },
+    'listen': function (fn) {
+
+      var loader = this._loader;
+
+      if(!loader.$$listenCallbacks) {
+
+        loader.$$listenCallbacks = [];
+
+      }
+
+      loader.$$listenCallbacks.push(fn);
+
+      return this;
+
     },
     // 26.3.3.9 keys not implemented
     // 26.3.3.10
